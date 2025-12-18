@@ -2,25 +2,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-# ======================================================
-# Функция и производная
-# ======================================================
+# функция
 def f(x):
     return x**3 - 2*x - 5
 
 
+# производная функции
 def df(x):
     return 3*x**2 - 2
 
 
-# Функция для метода простой итерации
+# функция для метода простой итерации
 def g(x):
     return (x**3 - 5) / 2
 
 
-# ======================================================
-# Начальные условия
-# ======================================================
+# начальные значения
 a, b = 2.0, 3.0
 x_newton = 3.0
 x_sec_prev, x_sec = 2.0, 3.0
@@ -41,15 +38,12 @@ secant_converged = False
 fixed_point_diverged = False
 
 
-# ======================================================
-# Итерационный процесс
-# ======================================================
 print("Сравнение методов:\n")
 
 for i in range(1, iterations + 1):
     print(f"Итерация {i}:")
 
-    # ---------- Bisection ----------
+    # метод бисекции
     c = (a + b) / 2
     results["Bisection"].append(c)
     if f(a) * f(c) < 0:
@@ -58,12 +52,12 @@ for i in range(1, iterations + 1):
         a = c
     print(f"  Bisection       = {c:.6f}")
 
-    # ---------- Newton ----------
+    # метод Ньютона
     x_newton = x_newton - f(x_newton) / df(x_newton)
     results["Newton"].append(x_newton)
     print(f"  Newton          = {x_newton:.6f}")
 
-    # ---------- Secant ----------
+    # метод секущих
     if not secant_converged:
         denom = f(x_sec) - f(x_sec_prev)
         if abs(denom) < eps:
@@ -79,7 +73,7 @@ for i in range(1, iterations + 1):
         results["Secant"].append(x_sec)
         print("  Secant          = converged")
 
-    # ---------- False Position ----------
+    # метод ложного положения
     x_fp_false = (a * f(b) - b * f(a)) / (f(b) - f(a))
     results["False Position"].append(x_fp_false)
     if f(a) * f(x_fp_false) < 0:
@@ -88,7 +82,7 @@ for i in range(1, iterations + 1):
         a = x_fp_false
     print(f"  False Position  = {x_fp_false:.6f}")
 
-    # ---------- Fixed Point ----------
+    # метод простой итерации
     if not fixed_point_diverged:
         try:
             x_fp = g(x_fp)
@@ -97,23 +91,21 @@ for i in range(1, iterations + 1):
         except OverflowError:
             fixed_point_diverged = True
             results["Fixed Point"].append(None)
-            print("  Fixed Point     = divergence (overflow)")
+            print("  Fixed Point     = divergence")
     else:
         results["Fixed Point"].append(None)
         print("  Fixed Point     = divergence")
 
-    print("-" * 50)
+    print()
 
 
-# ======================================================
-# График
-# ======================================================
+# график функции и найденных корней
 x_vals = np.linspace(1.5, 3.2, 400)
 y_vals = f(x_vals)
 
 plt.figure(figsize=(10, 6))
 plt.plot(x_vals, y_vals, label="f(x) = x³ - 2x - 5")
-plt.axhline(0, color="black", linewidth=0.8)
+plt.axhline(0, color="black")
 
 colors = {
     "Bisection": "red",
@@ -127,8 +119,7 @@ for method, color in colors.items():
         results[method][-1],
         f(results[method][-1]),
         color=color,
-        label=method,
-        zorder=5
+        label=method
     )
 
 plt.xlabel("x")
@@ -137,4 +128,3 @@ plt.title("Сравнение численных методов поиска к�
 plt.legend()
 plt.grid()
 plt.show()
-
