@@ -1,0 +1,107 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# --------------------------------------------------
+# Функция и производная
+# --------------------------------------------------
+def f(x):
+    return x**3 - 2*x - 5
+
+def df(x):
+    return 3*x**2 - 2
+
+# Функция для fixed point (x = g(x))
+def g(x):
+    return (x**3 - 5) / 2
+
+
+# --------------------------------------------------
+# Начальные условия
+# --------------------------------------------------
+a, b = 2.0, 3.0          # для бисекции и false position
+x_newton = 3.0           # для Ньютона
+x_sec_prev, x_sec = 2.0, 3.0   # для секущих
+x_fp = 3.0               # для fixed point
+
+iterations = 10
+
+results = {
+    "Bisection": [],
+    "Newton": [],
+    "Secant": [],
+    "False Position": [],
+    "Fixed Point": []
+}
+
+# --------------------------------------------------
+# Итерационный процесс (ОДИН ЦИКЛ)
+# --------------------------------------------------
+print("Сравнение методов:\n")
+
+for i in range(iterations):
+    print(f"Итерация {i+1}:")
+
+    # ---------- Bisection ----------
+    c = (a + b) / 2
+    results["Bisection"].append(c)
+    if f(a) * f(c) < 0:
+        b = c
+    else:
+        a = c
+    print(f"  Bisection       = {c:.6f}")
+
+    # ---------- Newton ----------
+    x_newton = x_newton - f(x_newton) / df(x_newton)
+    results["Newton"].append(x_newton)
+    print(f"  Newton          = {x_newton:.6f}")
+
+    # ---------- Secant ----------
+    x_next = x_sec - f(x_sec) * (x_sec - x_sec_prev) / (f(x_sec) - f(x_sec_prev))
+    x_sec_prev, x_sec = x_sec, x_next
+    results["Secant"].append(x_sec)
+    print(f"  Secant          = {x_sec:.6f}")
+
+    # ---------- False Position ----------
+    x_fp_false = (a * f(b) - b * f(a)) / (f(b) - f(a))
+    results["False Position"].append(x_fp_false)
+    if f(a) * f(x_fp_false) < 0:
+        b = x_fp_false
+    else:
+        a = x_fp_false
+    print(f"  False Position  = {x_fp_false:.6f}")
+
+    # ---------- Fixed Point ----------
+    x_fp = g(x_fp)
+    results["Fixed Point"].append(x_fp)
+    print(f"  Fixed Point     = {x_fp:.6f}")
+
+    print("-" * 50)
+
+
+# --------------------------------------------------
+# График функции и найденных корней
+# --------------------------------------------------
+x_vals = np.linspace(1.5, 3.2, 400)
+y_vals = f(x_vals)
+
+plt.figure(figsize=(10, 6))
+plt.plot(x_vals, y_vals, label="f(x) = x³ - 2x - 5")
+plt.axhline(0)
+
+colors = {
+    "Bisection": "red",
+    "Newton": "green",
+    "Secant": "purple",
+    "False Position": "orange",
+    "Fixed Point": "brown"
+}
+
+for method, vals in results.items():
+    plt.scatter(vals[-1], f(vals[-1]), color=colors[method], label=method)
+
+plt.xlabel("x")
+plt.ylabel("f(x)")
+plt.title("Сравнение методов поиска корня")
+plt.legend()
+plt.grid()
+plt.show()
