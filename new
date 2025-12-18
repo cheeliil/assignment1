@@ -1,29 +1,33 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# --------------------------------------------------
+
+# ======================================================
 # Функция и производная
-# --------------------------------------------------
+# ======================================================
 def f(x):
     return x**3 - 2*x - 5
+
 
 def df(x):
     return 3*x**2 - 2
 
-# Функция для fixed point (x = g(x))
+
+# Функция для метода простой итерации
 def g(x):
     return (x**3 - 5) / 2
 
 
-# --------------------------------------------------
+# ======================================================
 # Начальные условия
-# --------------------------------------------------
-a, b = 2.0, 3.0          # для бисекции и false position
-x_newton = 3.0           # для Ньютона
-x_sec_prev, x_sec = 2.0, 3.0   # для секущих
-x_fp = 3.0               # для fixed point
+# ======================================================
+a, b = 2.0, 3.0
+x_newton = 3.0
+x_sec_prev, x_sec = 2.0, 3.0
+x_fp = 3.0
 
 iterations = 10
+eps = 1e-10
 
 results = {
     "Bisection": [],
@@ -33,13 +37,17 @@ results = {
     "Fixed Point": []
 }
 
-# --------------------------------------------------
-# Итерационный процесс (ОДИН ЦИКЛ)
-# --------------------------------------------------
+secant_converged = False
+fixed_point_diverged = False
+
+
+# ======================================================
+# Итерационный процесс
+# ======================================================
 print("Сравнение методов:\n")
 
-for i in range(iterations):
-    print(f"Итерация {i+1}:")
+for i in range(1, iterations + 1):
+    print(f"Итерация {i}:")
 
     # ---------- Bisection ----------
     c = (a + b) / 2
@@ -56,10 +64,20 @@ for i in range(iterations):
     print(f"  Newton          = {x_newton:.6f}")
 
     # ---------- Secant ----------
-    x_next = x_sec - f(x_sec) * (x_sec - x_sec_prev) / (f(x_sec) - f(x_sec_prev))
-    x_sec_prev, x_sec = x_sec, x_next
-    results["Secant"].append(x_sec)
-    print(f"  Secant          = {x_sec:.6f}")
+    if not secant_converged:
+        denom = f(x_sec) - f(x_sec_prev)
+        if abs(denom) < eps:
+            secant_converged = True
+            results["Secant"].append(x_sec)
+            print("  Secant          = converged")
+        else:
+            x_next = x_sec - f(x_sec) * (x_sec - x_sec_prev) / denom
+            x_sec_prev, x_sec = x_sec, x_next
+            results["Secant"].append(x_sec)
+            print(f"  Secant          = {x_sec:.6f}")
+    else:
+        results["Secant"].append(x_sec)
+        print("  Secant          = converged")
 
     # ---------- False Position ----------
     x_fp_false = (a * f(b) - b * f(a)) / (f(b) - f(a))
@@ -71,37 +89,52 @@ for i in range(iterations):
     print(f"  False Position  = {x_fp_false:.6f}")
 
     # ---------- Fixed Point ----------
-    x_fp = g(x_fp)
-    results["Fixed Point"].append(x_fp)
-    print(f"  Fixed Point     = {x_fp:.6f}")
+    if not fixed_point_diverged:
+        try:
+            x_fp = g(x_fp)
+            results["Fixed Point"].append(x_fp)
+            print(f"  Fixed Point     = {x_fp:.6f}")
+        except OverflowError:
+            fixed_point_diverged = True
+            results["Fixed Point"].append(None)
+            print("  Fixed Point     = divergence (overflow)")
+    else:
+        results["Fixed Point"].append(None)
+        print("  Fixed Point     = divergence")
 
     print("-" * 50)
 
 
-# --------------------------------------------------
-# График функции и найденных корней
-# --------------------------------------------------
+# ======================================================
+# График
+# ======================================================
 x_vals = np.linspace(1.5, 3.2, 400)
 y_vals = f(x_vals)
 
 plt.figure(figsize=(10, 6))
 plt.plot(x_vals, y_vals, label="f(x) = x³ - 2x - 5")
-plt.axhline(0)
+plt.axhline(0, color="black", linewidth=0.8)
 
 colors = {
     "Bisection": "red",
     "Newton": "green",
     "Secant": "purple",
-    "False Position": "orange",
-    "Fixed Point": "brown"
+    "False Position": "orange"
 }
 
-for method, vals in results.items():
-    plt.scatter(vals[-1], f(vals[-1]), color=colors[method], label=method)
+for method, color in colors.items():
+    plt.scatter(
+        results[method][-1],
+        f(results[method][-1]),
+        color=color,
+        label=method,
+        zorder=5
+    )
 
 plt.xlabel("x")
 plt.ylabel("f(x)")
-plt.title("Сравнение методов поиска корня")
+plt.title("Сравнение численных методов поиска корня")
 plt.legend()
 plt.grid()
 plt.show()
+
